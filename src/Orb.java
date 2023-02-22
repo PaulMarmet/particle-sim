@@ -6,16 +6,17 @@ public class Orb {
 	public Vector2 pos = new Vector2(400f, 100f);
 	public Vector2 speed = new Vector2();
 	public Vector2 acceleration = new Vector2();
-	public float radius = 10; //the radius of the orbs
+	public float radius = 5; //the radius of the orbs
 	public float mass = (float) ((radius*radius)*Math.PI);
 	
 	public float gravity = 98;
+	public static float friction = 1.9f;
 	
 	//orb appearance
 	public Color color = Color.white;
 	
 	//time stuff
-	public static long lastTime = System.nanoTime();
+	public static long lastTime = System.nanoTime(); //currentTimeMillis
 	public static long currentTime = System.nanoTime();
 	public static double passedTime;
 	
@@ -23,9 +24,9 @@ public class Orb {
 	public boolean updating = false;
 	
 	public static void updateTime() {
-		currentTime = System.currentTimeMillis(); //get the current time 
+		currentTime = System.nanoTime(); //get the current time 
 		//in millisecond(1e3) change to nanosecond(1e9) for large amount of orbs
-		passedTime = (currentTime - lastTime) / 1e3; //finds how much time has passed
+		passedTime = (currentTime - lastTime) / 1e9; //finds how much time has passed
 		//System.out.println(passedTime + " " +currentTime +" "+lastTime);
 		lastTime = currentTime; //set the past time for the next update
 		//System.out.println(passedTime);
@@ -121,50 +122,43 @@ public class Orb {
 					target.pos.y -= (target.radius/totRadius)*overlap.y;
 					
 					//modify the speed
-					Vector2 newSpeed = new Vector2((speed.x+target.speed.x)/2, (speed.y+target.speed.y)/2);
+					/*Vector2 newSpeed = new Vector2((speed.x+target.speed.x)/2, (speed.y+target.speed.y)/2);
 					
 					speed.x = newSpeed.x;
 					target.speed.x = newSpeed.x;
 					speed.y = newSpeed.y;
-					target.speed.y = newSpeed.y;
-//					float normalX = target.x-x;
-//					float normalY = target.y-y;
-//					
-//					float magnitude = (float) Math.sqrt((normalX*normalX)+(normalY*normalY));
-//					float unitNormalX = normalX / magnitude;
-//					float unitNormalY = normalY / magnitude;
+					target.speed.y = newSpeed.y;*/
+					Vector2 normal = new Vector2(target.pos.x-pos.x, target.pos.y-pos.y);
+					float magnitude = normal.magnitude(normal);
+					Vector2 unitNormal = normal.unitVector(normal, magnitude);
+					Vector2 unitTangent = new Vector2(-unitNormal.y, unitNormal.x);
 					
-					/*Vector2D v_n = b2.pos() - b1.pos(); // v_n = normal vec. - a vector normal to the collision surface
-	Vector2D v_un = v_n.unitVector(); // unit normal vector
-	Vector2D v_ut(-v_un.y(), v_un.x()); // unit tangent vector
-	
-	// Compute scalar projections of velocities onto v_un and v_ut
-	double v1n = v_un * b1.v(); // Dot product
-	double v1t = v_ut * b1.v();
-	double v2n = v_un * b2.v();
-	double v2t = v_ut * b2.v();
-	
-	// Compute new tangential velocities
-	double v1tPrime = v1t; // Note: in reality, the tangential velocities do not change after the collision
-	double v2tPrime = v2t;
-	
-	// Compute new normal velocities using one-dimensional elastic collision equations in the normal direction
-	// Division by zero avoided. See early return above.
-	double v1nPrime = (v1n * (b1.m() - b2.m()) + 2. * b2.m() * v2n) / (b1.m() + b2.m());
-	double v2nPrime = (v2n * (b2.m() - b1.m()) + 2. * b1.m() * v1n) / (b1.m() + b2.m());
-	
-	// Compute new normal and tangential velocity vectors
-	Vector2D v_v1nPrime = v1nPrime * v_un; // Multiplication by a scalar
-	Vector2D v_v1tPrime = v1tPrime * v_ut;
-	Vector2D v_v2nPrime = v2nPrime * v_un;
-	Vector2D v_v2tPrime = v2tPrime * v_ut;
-	
-	// Set new velocities in x and y coordinates
-	b1.setVX(v_v1nPrime.x() + v_v1tPrime.x());
-	b1.setVY(v_v1nPrime.y() + v_v1tPrime.y());
-	b2.setVX(v_v2nPrime.x() + v_v2tPrime.x());
-	b2.setVY(v_v2nPrime.y() + v_v2tPrime.y());
-					*/
+					//Velocity Normal & Velocity Tangent
+					float v1N = unitNormal.dotProduct(unitNormal, speed);
+					float v1T = unitNormal.dotProduct(unitTangent, speed);
+					float v2N = unitNormal.dotProduct(unitNormal, target.speed);
+					float v2T = unitNormal.dotProduct(unitTangent, target.speed);
+					
+					//Prime velocity tangent
+					float pV1T = v1T;
+					float pV2T = v2T;
+					
+					//Prime velocity normal
+					float pV1N = (v1N * (mass - target.mass) + friction * target.mass * v2N) / (mass + target.mass);
+					float pV2N = (v2N * (target.mass - mass) + friction * mass * v1N) / (target.mass + mass);
+					
+					//new speed vectors
+					Vector2 v_pV1N = unitNormal.multiply(unitNormal, pV1N);
+					Vector2 v_pV1T = unitTangent.multiply(unitTangent, pV1T);
+					Vector2 v_pV2N = unitNormal.multiply(unitNormal, pV2N);
+					Vector2 v_pV2T = unitTangent.multiply(unitTangent, pV2T);
+					
+					//apply new speed
+					speed.x = v_pV1N.x + v_pV1T.x;
+					speed.y = v_pV1N.y + v_pV1T.y;
+					target.speed.x = v_pV2N.x + v_pV2T.x;
+					target.speed.y = v_pV2N.y + v_pV2T.y;
+					
 				}
 			}
 		}

@@ -67,7 +67,7 @@ public class GamePanel extends JPanel implements Runnable{
 			}
 		}
 		if(1/Orb.passedTime >= 60 && Orb.currentTime >= lastOrb + 5e8) { // && Orb.currentTime >= lastOrb + 5e8
-			//newOrb();
+			newOrb();
 			lastOrb = Orb.currentTime;
 		}
 		
@@ -93,8 +93,8 @@ public class GamePanel extends JPanel implements Runnable{
 	public static void newOrb() {
 		orbs.add(new Orb());
 		
-		orbs.get(orbs.size()-1).speed.x = -100;
-		orbs.get(orbs.size()-1).pos.x = 0;
+		//orbs.get(orbs.size()-1).speed.x = -100;
+		orbs.get(orbs.size()-1).pos.x = screenWidth/2 - 50;
 		
 		//orbs.get(orbs.size()-1).x = (screenWidth/2 + offset);
 		//updateOffset();
