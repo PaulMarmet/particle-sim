@@ -2,100 +2,110 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 public class Orb {
+//	public static Boolean bounds = false;
+//	public static Boolean gravDir = false; //direction of gravity, false is center of screen, true is downwards
+	public static float defRadius = 4;
+	public static float defGravity = 98;
+	public static float defRCoefficient = 0.99f; //0 to 1
 	//orb motion
-	public float x = 400f;
-	public float y = 100f;
-	public float speedX;
-	public float speedY;
-	public float accelerationX;
-	public float accelerationY;
-	public float radius = 10; //the radius of the orbs
+	public Vector2 pos = new Vector2(400f, 100f);
+	public Vector2 speed = new Vector2();
+	public Vector2 acceleration = new Vector2();
+	public float radius = defRadius; //the radius of the orbs
 	public float mass = (float) ((radius*radius)*Math.PI);
 	
-	public float gravity = 98;
+	public static float gravity = defGravity;
+	public static float rCoefficient = defRCoefficient; //0 to 1
 	
 	//orb appearance
 	public Color color = Color.white;
 	
 	//time stuff
-	public static long lastTime = System.nanoTime();
+	public static long lastTime = System.nanoTime(); //currentTimeMillis
 	public static long currentTime = System.nanoTime();
 	public static double passedTime;
 	
-	//other
-	public boolean updating = false;
 	
 	public static void updateTime() {
-		currentTime = System.nanoTime(); //get the current time
+		currentTime = System.nanoTime(); //get the current time 
+		//in millisecond(1e3) change to nanosecond(1e9) for large amount of orbs
 		passedTime = (currentTime - lastTime) / 1e9; //finds how much time has passed
+		//System.out.println(passedTime + " " +currentTime +" "+lastTime);
 		lastTime = currentTime; //set the past time for the next update
 		//System.out.println(passedTime);
 	}
 	
 	public void physicsUpdate(int id) {
-		accelerationX = 0;
-		accelerationY = 0;
+		acceleration.x = 0;
+		acceleration.y = 0;
+		mass = (float) ((radius*radius)*Math.PI);
 		applyGravity();
 		updatePosition();
 		applyCollision(id);
-		//applyConstraints();
+//		if(bounds == true) {
+//			applyConstraints();
+//		}
 	}
 	
 	public void applyGravity() {
 		//downward gravity
-//		if(y <= GamePanel.screenHeight - radius)
-//		{
-//			accelerationY -= 98;
+//		if(bounds == true && gravDir == true) {
+//			if(pos.y <= GamePanel.screenHeight - radius)
+//			{
+//				acceleration.y -= 98;
+//			}
+//			return;
 //		}
 		
 		//central gravity
-		float distanceX = x-GamePanel.screenWidth/2;
-		float distanceY = y-GamePanel.screenHeight/2;
-		float distance = (float) Math.hypot(distanceX, distanceY);
-		
+		Vector2 distanceV = new Vector2();
+		distanceV.x = pos.x-GamePanel.screenWidth/2;
+		distanceV.y = pos.y-GamePanel.screenHeight/2;
+		float distance = (float) Math.hypot(distanceV.x, distanceV.y);
+		//System.out.println(pos.x+" and "+distance);
 		if(distance > radius) {
-			accelerationX = (distanceX/distance)*gravity;
-			accelerationY = (distanceY/distance)*gravity;
+			acceleration.x = (distanceV.x/distance)*gravity;
+			acceleration.y = (distanceV.y/distance)*gravity;
 		}
 	}
 	
 	public void updatePosition() {
-		speedX += accelerationX * passedTime;
-		speedY += accelerationY * passedTime;
+		speed.x += acceleration.x * passedTime;
+		speed.y += acceleration.y * passedTime;
 		//System.out.print("");
 		
-		x -= speedX * passedTime;
-		y -= speedY * passedTime;
+		pos.x -= speed.x * passedTime;
+		pos.y -= speed.y * passedTime;
 		//System.out.print("");
 	}
 	
 	public void applyConstraints() {
-		if(y <= radius) //top constraint
+		if(pos.y <= radius) //top constraint
 		{
-			y = radius;
-			if(speedY > 0) {
-				speedY = -speedY*0.3f;
+			pos.y = radius;
+			if(speed.y > 0) {
+				speed.y = -speed.y*0.3f;
 			}
 		}
-		if(y >= GamePanel.screenHeight - radius) //bottom constraint
+		if(pos.y >= GamePanel.screenHeight - radius) //bottom constraint
 		{
-			y = GamePanel.screenHeight - radius;
-			if(speedY < 0) {
-				speedY = -speedY*0.3f;
+			pos.y = GamePanel.screenHeight - radius;
+			if(speed.y < 0) {
+				speed.y = -speed.y*0.3f;
 			}
 		}
-		if(x <= radius) //top constraint
+		if(pos.x <= radius) //top constraint
 		{
-			x = radius;
-			if(speedX > 0) {
-				speedX = -speedX*0.3f;
+			pos.x = radius;
+			if(speed.x > 0) {
+				speed.x = -speed.x*0.3f;
 			}
 		}
-		if(x >= GamePanel.screenWidth - radius) //bottom constraint
+		if(pos.x >= GamePanel.screenWidth - radius) //bottom constraint
 		{
-			x = GamePanel.screenWidth - radius;
-			if(speedX < 0) {
-				speedX = -speedX*0.3f;
+			pos.x = GamePanel.screenWidth - radius;
+			if(speed.x < 0) {
+				speed.x = -speed.x*0.3f;
 			}
 		}
 	}
@@ -104,35 +114,60 @@ public class Orb {
 		if(GamePanel.orbs.size() >= 2) {
 			for(int i = id+1; i < GamePanel.orbs.size(); i++) {
 				Orb target = GamePanel.orbs.get(i);
-				if(Math.abs(Math.hypot(x-target.x, y-target.y)) < target.radius + radius) {
+				Vector2 vecteur = new Vector2(); 
+				float distance = vecteur.distance(pos, target.pos);
+				//System.out.println(pos.x+" : "+target.pos.x+" : "+distance);
+				if(Math.abs(distance) < target.radius + radius) {
 					//position based collision
 					float totRadius = radius+target.radius;
-					float totOverlap = (float) (totRadius-Math.hypot(x-target.x, y-target.y));
+					float totOverlap = (float) (totRadius-distance);
 					float overlapRatio = totOverlap/totRadius;
 					
-					float overlapX = (x-target.x)*overlapRatio;
-					float overlapY = (y-target.y)*overlapRatio;
+					Vector2 overlap = new Vector2((pos.x-target.pos.x)*overlapRatio, (pos.y-target.pos.y)*overlapRatio);
 					
-					x += (radius/totRadius)*overlapX;
-					target.x -= (target.radius/totRadius)*overlapX;
-					y += (radius/totRadius)*overlapY;
-					target.y -= (target.radius/totRadius)*overlapY;
+					pos.x += (radius/totRadius)*overlap.x;
+					target.pos.x -= (target.radius/totRadius)*overlap.x;
+					pos.y += (radius/totRadius)*overlap.y;
+					target.pos.y -= (target.radius/totRadius)*overlap.y;
 					
 					//modify the speed
-					float newSpeedX = (speedX+target.speedX)/2;
-					float newSpeedY = (speedY+target.speedY)/2;
+					/*Vector2 newSpeed = new Vector2((speed.x+target.speed.x)/2, (speed.y+target.speed.y)/2);
 					
-					speedX = newSpeedX;
-					target.speedX = newSpeedX;
-					speedY = newSpeedY;
-					target.speedY = newSpeedY;
-//					float normalX = target.x-x;
-//					float normalY = target.y-y;
-//					
-//					float magnitude = (float) Math.sqrt((normalX*normalX)+(normalY*normalY));
-//					float unitNormalX = normalX / magnitude;
-//					float unitNormalY = normalY / magnitude;
+					speed.x = newSpeed.x;
+					target.speed.x = newSpeed.x;
+					speed.y = newSpeed.y;
+					target.speed.y = newSpeed.y;*/
+					Vector2 normal = new Vector2(target.pos.x-pos.x, target.pos.y-pos.y);
+					float magnitude = normal.magnitude(normal);
+					Vector2 unitNormal = normal.unitVector(normal, magnitude);
+					Vector2 unitTangent = new Vector2(-unitNormal.y, unitNormal.x);
 					
+					//Velocity Normal & Velocity Tangent
+					float v1N = unitNormal.dotProduct(unitNormal, speed);
+					float v1T = unitNormal.dotProduct(unitTangent, speed);
+					float v2N = unitNormal.dotProduct(unitNormal, target.speed);
+					float v2T = unitNormal.dotProduct(unitTangent, target.speed);
+					
+					//Prime velocity normal
+					float pV1N = (v1N * (mass - target.mass) + 2 * target.mass * v2N) / (mass + target.mass);
+					float pV2N = (v2N * (target.mass - mass) + 2 * mass * v1N) / (target.mass + mass);
+					
+					//new speed vectors
+					Vector2 v_pV1N = unitNormal.multiply(unitNormal, pV1N);
+					Vector2 v_pV1T = unitTangent.multiply(unitTangent, v1T);
+					Vector2 v_pV2N = unitNormal.multiply(unitNormal, pV2N);
+					Vector2 v_pV2T = unitTangent.multiply(unitTangent, v2T);
+
+					// orb coefficient
+					Vector2 o1C1 = new Vector2(v_pV1N.x + v_pV1T.x, v_pV1N.y + v_pV1T.y);
+					Vector2 o2C1 = new Vector2(v_pV2N.x + v_pV2T.x, v_pV2N.y + v_pV2T.y);
+					Vector2 oC0 = new Vector2(((mass * speed.x) + (target.mass * target.speed.x)) / (mass + target.mass), ((mass * speed.y) + (target.mass * target.speed.y)) / (mass + target.mass));
+
+					
+					
+					//apply new speed
+					speed = speed.add(speed.multiply(o1C1, rCoefficient), speed.multiply(oC0, (1 - rCoefficient)));
+					target.speed = target.speed.add(target.speed.multiply(o2C1, rCoefficient), target.speed.multiply(oC0, (1 - rCoefficient)));
 				}
 			}
 		}
