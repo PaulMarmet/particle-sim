@@ -2,15 +2,20 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 public class Orb {
+//	public static Boolean bounds = false;
+//	public static Boolean gravDir = false; //direction of gravity, false is center of screen, true is downwards
+	public static float defRadius = 4;
+	public static float defGravity = 98;
+	public static float defRCoefficient = 0.99f; //0 to 1
 	//orb motion
 	public Vector2 pos = new Vector2(400f, 100f);
 	public Vector2 speed = new Vector2();
 	public Vector2 acceleration = new Vector2();
-	public float radius = 5; //the radius of the orbs
+	public float radius = defRadius; //the radius of the orbs
 	public float mass = (float) ((radius*radius)*Math.PI);
 	
-	public float gravity = 98;
-	public static float friction = 1.9f;
+	public static float gravity = defGravity;
+	public static float rCoefficient = defRCoefficient; //0 to 1
 	
 	//orb appearance
 	public Color color = Color.white;
@@ -20,8 +25,6 @@ public class Orb {
 	public static long currentTime = System.nanoTime();
 	public static double passedTime;
 	
-	//other
-	public boolean updating = false;
 	
 	public static void updateTime() {
 		currentTime = System.nanoTime(); //get the current time 
@@ -35,17 +38,23 @@ public class Orb {
 	public void physicsUpdate(int id) {
 		acceleration.x = 0;
 		acceleration.y = 0;
+		mass = (float) ((radius*radius)*Math.PI);
 		applyGravity();
 		updatePosition();
 		applyCollision(id);
-		//applyConstraints();
+//		if(bounds == true) {
+//			applyConstraints();
+//		}
 	}
 	
 	public void applyGravity() {
 		//downward gravity
-//		if(y <= GamePanel.screenHeight - radius)
-//		{
-//			acceleration.y -= 98;
+//		if(bounds == true && gravDir == true) {
+//			if(pos.y <= GamePanel.screenHeight - radius)
+//			{
+//				acceleration.y -= 98;
+//			}
+//			return;
 //		}
 		
 		//central gravity
@@ -139,26 +148,26 @@ public class Orb {
 					float v2N = unitNormal.dotProduct(unitNormal, target.speed);
 					float v2T = unitNormal.dotProduct(unitTangent, target.speed);
 					
-					//Prime velocity tangent
-					float pV1T = v1T;
-					float pV2T = v2T;
-					
 					//Prime velocity normal
-					float pV1N = (v1N * (mass - target.mass) + friction * target.mass * v2N) / (mass + target.mass);
-					float pV2N = (v2N * (target.mass - mass) + friction * mass * v1N) / (target.mass + mass);
+					float pV1N = (v1N * (mass - target.mass) + 2 * target.mass * v2N) / (mass + target.mass);
+					float pV2N = (v2N * (target.mass - mass) + 2 * mass * v1N) / (target.mass + mass);
 					
 					//new speed vectors
 					Vector2 v_pV1N = unitNormal.multiply(unitNormal, pV1N);
-					Vector2 v_pV1T = unitTangent.multiply(unitTangent, pV1T);
+					Vector2 v_pV1T = unitTangent.multiply(unitTangent, v1T);
 					Vector2 v_pV2N = unitNormal.multiply(unitNormal, pV2N);
-					Vector2 v_pV2T = unitTangent.multiply(unitTangent, pV2T);
+					Vector2 v_pV2T = unitTangent.multiply(unitTangent, v2T);
+
+					// orb coefficient
+					Vector2 o1C1 = new Vector2(v_pV1N.x + v_pV1T.x, v_pV1N.y + v_pV1T.y);
+					Vector2 o2C1 = new Vector2(v_pV2N.x + v_pV2T.x, v_pV2N.y + v_pV2T.y);
+					Vector2 oC0 = new Vector2(((mass * speed.x) + (target.mass * target.speed.x)) / (mass + target.mass), ((mass * speed.y) + (target.mass * target.speed.y)) / (mass + target.mass));
+
+					
 					
 					//apply new speed
-					speed.x = v_pV1N.x + v_pV1T.x;
-					speed.y = v_pV1N.y + v_pV1T.y;
-					target.speed.x = v_pV2N.x + v_pV2T.x;
-					target.speed.y = v_pV2N.y + v_pV2T.y;
-					
+					speed = speed.add(speed.multiply(o1C1, rCoefficient), speed.multiply(oC0, (1 - rCoefficient)));
+					target.speed = target.speed.add(target.speed.multiply(o2C1, rCoefficient), target.speed.multiply(oC0, (1 - rCoefficient)));
 				}
 			}
 		}

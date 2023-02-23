@@ -59,14 +59,14 @@ public class GamePanel extends JPanel implements Runnable{
 		screenHeight = bounds.height;
 		if(orbs.size() > 0) {
 			for(int i = 0; i<orbs.size(); i++) {
-				if(orbs.get(i).updating == false) {
-					orbs.get(i).updating = true;
+				//if(orbs.get(i).updating == false) {
+					//orbs.get(i).updating = true;
 					orbs.get(i).physicsUpdate(i);
-					orbs.get(i).updating = false;
-				}
+					//orbs.get(i).updating = false;
+				//}
 			}
 		}
-		if(1/Orb.passedTime >= 60 && Orb.currentTime >= lastOrb + 5e8) { // && Orb.currentTime >= lastOrb + 5e8
+		if(1/Orb.passedTime >= 60 && Orb.currentTime >= lastOrb + 1e9) { // && Orb.currentTime >= lastOrb + 5e8
 			newOrb();
 			lastOrb = Orb.currentTime;
 		}
@@ -95,7 +95,6 @@ public class GamePanel extends JPanel implements Runnable{
 		
 		//orbs.get(orbs.size()-1).speed.x = -100;
 		orbs.get(orbs.size()-1).pos.x = screenWidth/2 - 50;
-		
 		//orbs.get(orbs.size()-1).x = (screenWidth/2 + offset);
 		//updateOffset();
 		
@@ -124,5 +123,12 @@ public class GamePanel extends JPanel implements Runnable{
 			b -= 2;
 			r += 2;
 		}	
+	}
+	
+	public static void resetOrb() {
+		orbs.clear();
+		r = 100;
+		g = 40;
+		b = 40;
 	}
 }

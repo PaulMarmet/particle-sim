@@ -35,6 +35,10 @@ public class Vector2 {
 		Vector2 result = new Vector2(vector.x * scalar, vector.y * scalar);
 		return result;
 	}
+	public Vector2 divide(Vector2 vector, float scalar) {
+		Vector2 result = new Vector2(vector.x / scalar, vector.y / scalar);
+		return result;
+	}
 	
 	public float dotProduct(Vector2 a, Vector2 b) {
 		float dot = (a.x * b.x) + (a.y * b.y);
