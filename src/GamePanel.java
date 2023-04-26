@@ -9,6 +9,10 @@ import java.util.Random;
 import javax.swing.JPanel;
 
 public class GamePanel extends JPanel implements Runnable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//SCREEN SETTINGS
 	static int screenWidth = 800;
 	static int screenHeight = 600;
@@ -19,6 +23,7 @@ public class GamePanel extends JPanel implements Runnable{
 	static int b = 40;
 	static int offset = 0;
 	static boolean offsetDir = true;
+	static Random rand = new Random();
 	
 	static long lastOrb = System.nanoTime();
 	
@@ -66,8 +71,8 @@ public class GamePanel extends JPanel implements Runnable{
 				//}
 			}
 		}
-		if(1/Orb.passedTime >= 60 && Orb.currentTime >= lastOrb + 1e9) { // && Orb.currentTime >= lastOrb + 5e8
-			newOrb();
+		if(1/Orb.passedTime >= 60 && Orb.currentTime >= lastOrb + 1e8) { // && Orb.currentTime >= lastOrb + 5e8
+			//newOrb();
 			lastOrb = Orb.currentTime;
 		}
 		
@@ -94,9 +99,13 @@ public class GamePanel extends JPanel implements Runnable{
 		orbs.add(new Orb());
 		
 		//orbs.get(orbs.size()-1).speed.x = -100;
-		orbs.get(orbs.size()-1).pos.x = screenWidth/2 - 50;
-		//orbs.get(orbs.size()-1).x = (screenWidth/2 + offset);
+		//orbs.get(orbs.size()-1).pos.x = screenWidth/2 - 50;
+		//orbs.get(orbs.size()-1).pos.x = (screenWidth/2 + offset);
 		//updateOffset();
+		orbs.get(orbs.size()-1).pos.x = rand.nextFloat() * screenWidth;
+		orbs.get(orbs.size()-1).pos.y = rand.nextFloat() * screenHeight;
+
+		orbs.get(orbs.size()-1).radius = 2 + (rand.nextFloat() * 8);
 		
 		orbs.get(orbs.size()-1).color = new Color((float) r/100, (float) g/100, (float) b/100);
 		updateColor();

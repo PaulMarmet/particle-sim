@@ -26,15 +26,15 @@ public class SimSettings {
 		myPanel.add(new JLabel(""));
 		myPanel.add(new JLabel("Select the radius for the orbs(above 0): "));
 		myPanel.add(new JLabel(""));
-		myPanel.add(new JLabel("Current: "+Orb.defRadius));
+		myPanel.add(new JLabel("Current: "+Config.getF("DEFAULT_ORB_RADIUS")));
 		myPanel.add(radField);
 		myPanel.add(new JLabel("Select the force of gravity: "));
 		myPanel.add(new JLabel(""));
-		myPanel.add(new JLabel("Current: "+Orb.defGravity));
+		myPanel.add(new JLabel("Current: "+Config.getF("FORCE_GRAVITY")));
 		myPanel.add(gravField);
 		myPanel.add(new JLabel("Select the 'bounce' coefficient(between 0 and 1): "));
 		myPanel.add(new JLabel(""));
-		myPanel.add(new JLabel("Current: "+Orb.defRCoefficient));
+		myPanel.add(new JLabel("Current: "+Config.getF("BOUNCE_COEFFICIENT")));
 		myPanel.add(coEffField);
 		
 
@@ -42,14 +42,20 @@ public class SimSettings {
 				"Please enter new configs", JOptionPane.OK_CANCEL_OPTION);
 		if (result == JOptionPane.OK_OPTION) {
   			if(radField.getText() != null && !radField.getText().isEmpty()) {
-  				Orb.defRadius = Float.parseFloat(radField.getText());
+  				Config.set("DEFAULT_ORB_RADIUS", Float.parseFloat(radField.getText()));
   			}
   			if(gravField.getText() != null && !gravField.getText().isEmpty()) {
-  				Orb.defGravity = Float.parseFloat(gravField.getText());
+  				Config.set("FORCE_GRAVITY", Float.parseFloat(gravField.getText()));
   			}
   			if(coEffField.getText() != null && !coEffField.getText().isEmpty()) {
-  				Orb.defRCoefficient = Float.parseFloat(coEffField.getText());
+  				Config.set("BOUNCE_COEFFICIENT", Float.parseFloat(coEffField.getText()));
   			}
 		}
+	}
+	
+	public JTextField newConfig(JPanel panel)
+	{
+		
+		return null;
 	}
 }

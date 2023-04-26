@@ -1,24 +1,25 @@
 import java.awt.Color;
-import java.util.ArrayList;
 
 public class Orb {
-//	public static Boolean bounds = false;
-//	public static Boolean gravDir = false; //direction of gravity, false is center of screen, true is downwards
-	public static float defRadius = 4;
-	public static float defGravity = 98;
-	public static float defRCoefficient = 0.99f; //0 to 1
 	//orb motion
 	public Vector2 pos = new Vector2(400f, 100f);
 	public Vector2 speed = new Vector2();
 	public Vector2 acceleration = new Vector2();
-	public float radius = defRadius; //the radius of the orbs
+	public float radius = Config.getF("DEFAULT_ORB_RADIUS"); //the radius of the orbs
 	public float mass = (float) ((radius*radius)*Math.PI);
 	
-	public static float gravity = defGravity;
-	public static float rCoefficient = defRCoefficient; //0 to 1
+	public static float gravity = Config.getF("FORCE_GRAVITY");
+	public static int gravDir = Config.getInt("GRAVITY_DIRECTION");
+	public static float gravConst = Config.getF("GRAVITATIONAL_CONSTANT");
+	public static boolean bounds = Config.getBool("BOUNDS");
+	public static float rCoefficient = Config.getF("BOUNCE_COEFFICIENT"); //0 to 1
 	
 	//orb appearance
+	public float r = 0f;
+	public float g = 0f;
+	public float b = 0.5f;
 	public Color color = Color.white;
+	public float highSpeed = 0f;
 	
 	//time stuff
 	public static long lastTime = System.nanoTime(); //currentTimeMillis
@@ -39,33 +40,60 @@ public class Orb {
 		acceleration.x = 0;
 		acceleration.y = 0;
 		mass = (float) ((radius*radius)*Math.PI);
-		applyGravity();
+		applyGravity(id);
 		updatePosition();
 		applyCollision(id);
-//		if(bounds == true) {
-//			applyConstraints();
-//		}
+		if(bounds == true) {applyConstraints();}
+		if(true) {speedColors();}
 	}
 	
-	public void applyGravity() {
-		//downward gravity
-//		if(bounds == true && gravDir == true) {
-//			if(pos.y <= GamePanel.screenHeight - radius)
-//			{
-//				acceleration.y -= 98;
-//			}
-//			return;
-//		}
-		
-		//central gravity
+	public void speedColors() {
+		if(Math.abs(speed.x) > highSpeed) {highSpeed = Math.abs(speed.x);}
+		if(Math.abs(speed.y) > highSpeed) {highSpeed = Math.abs(speed.y);}
+		r = Math.abs(speed.x) / highSpeed;
+		g = Math.abs(speed.y) / highSpeed;
+		color = new Color(r, g, b);
+	}
+	
+	public void applyGravity(int id) {
+		if(gravDir == 0) {downGravity();}//downward gravity
+		if(gravDir == 1) {centerGravity();} //central gravity
+		if(gravDir == 2) {orbGravity(id);} //orb related gravity
+	}
+	public void downGravity() {
+		if(bounds == true && gravDir == 0 && pos.y <= GamePanel.screenHeight - radius) {
+			acceleration.y -= 98;
+		}
+	}
+	public void centerGravity() {
 		Vector2 distanceV = new Vector2();
 		distanceV.x = pos.x-GamePanel.screenWidth/2;
 		distanceV.y = pos.y-GamePanel.screenHeight/2;
 		float distance = (float) Math.hypot(distanceV.x, distanceV.y);
-		//System.out.println(pos.x+" and "+distance);
+		
 		if(distance > radius) {
-			acceleration.x = (distanceV.x/distance)*gravity;
-			acceleration.y = (distanceV.y/distance)*gravity;
+			acceleration.x += (distanceV.x/distance)*gravity;
+			acceleration.y += (distanceV.y/distance)*gravity;
+		}
+	}
+	public void orbGravity(int id) {
+		if(GamePanel.orbs.size() >= 2) {
+			for(int i = 0; i < GamePanel.orbs.size(); i++) {
+				if(i != id) {
+					Orb target = GamePanel.orbs.get(i);
+					Vector2 vecteur = new Vector2(); 
+					float distance = vecteur.distance(pos, target.pos);
+					if(Math.abs(distance) > target.radius + radius) {
+						Vector2 orbDist = new Vector2();
+						orbDist.x = pos.x-target.pos.x;
+						orbDist.y = pos.y-target.pos.y;
+						float grav = (gravConst * target.mass)/distance;
+						
+						acceleration.x += (orbDist.x/distance)*grav;
+						acceleration.y += (orbDist.y/distance)*grav;
+					}
+				}
+			}
 		}
 	}
 	
@@ -171,9 +199,5 @@ public class Orb {
 				}
 			}
 		}
-		
 	}
-	
-	
-	
 }

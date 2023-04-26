@@ -1,5 +1,4 @@
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 
 public class Main {
 	public static void main(String args[]) {
@@ -15,6 +14,7 @@ public class Main {
 		window.setVisible(true);
 		
 		//ask for settings
+		Config.main(args);
 		SimSettings.panel(window);
 //		Orb.bounds = false;
 //		Integer bounds = JOptionPane.showConfirmDialog(window, "Can orbs go off screen?\nNot recommended with downwards gravity", "Bounds", JOptionPane.YES_NO_OPTION);
