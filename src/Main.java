@@ -15,7 +15,7 @@ public class Main {
 		
 		//ask for settings
 		Config.main(args);
-		SimSettings.panel(window);
+		SimSettings.mainPanel(window);
 //		Orb.bounds = false;
 //		Integer bounds = JOptionPane.showConfirmDialog(window, "Can orbs go off screen?\nNot recommended with downwards gravity", "Bounds", JOptionPane.YES_NO_OPTION);
 //		if(bounds != null && bounds == 1) {

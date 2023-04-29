@@ -26,7 +26,7 @@ public class KeyHandler implements KeyListener{
 			GamePanel.resetOrb();
 		}
 		if(code == KeyEvent.VK_ESCAPE) {
-			SimSettings.panel(SimSettings.storedWindow);
+			SimSettings.mainPanel(SimSettings.storedWindow);
 		}
 	}
 

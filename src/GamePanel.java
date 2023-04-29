@@ -96,18 +96,16 @@ public class GamePanel extends JPanel implements Runnable{
 	}
 	
 	public static void newOrb() {
-		orbs.add(new Orb());
+		orbs.add(new Orb(new Vector2(
+				rand.nextFloat() * screenWidth, 
+				rand.nextFloat() * screenHeight), 
+				(float) (Config.getF("DEFAULT_ORB_RADIUS") + ((rand.nextFloat() - 0.5) * 2 * Config.getF("RADIUS_RANGE"))),
+				new Color((float) r/100, (float) g/100, (float) b/100)));
 		
 		//orbs.get(orbs.size()-1).speed.x = -100;
 		//orbs.get(orbs.size()-1).pos.x = screenWidth/2 - 50;
 		//orbs.get(orbs.size()-1).pos.x = (screenWidth/2 + offset);
 		//updateOffset();
-		orbs.get(orbs.size()-1).pos.x = rand.nextFloat() * screenWidth;
-		orbs.get(orbs.size()-1).pos.y = rand.nextFloat() * screenHeight;
-
-		orbs.get(orbs.size()-1).radius = 2 + (rand.nextFloat() * 8);
-		
-		orbs.get(orbs.size()-1).color = new Color((float) r/100, (float) g/100, (float) b/100);
 		updateColor();
 	}
 	

@@ -2,22 +2,21 @@ import java.awt.Color;
 
 public class Orb {
 	//orb motion
-	public Vector2 pos = new Vector2(400f, 100f);
+	public Vector2 pos = new Vector2();
 	public Vector2 speed = new Vector2();
 	public Vector2 acceleration = new Vector2();
-	public float radius = Config.getF("DEFAULT_ORB_RADIUS"); //the radius of the orbs
-	public float mass = (float) ((radius*radius)*Math.PI);
+	public float radius; //the radius of the orbs
+	public float mass;
 	
 	public static float gravity = Config.getF("FORCE_GRAVITY");
-	public static int gravDir = Config.getInt("GRAVITY_DIRECTION");
+	public static int gravDirs = Config.getInt("GRAVITY_DIRECTION");
+	public static String gravDirBool;
 	public static float gravConst = Config.getF("GRAVITATIONAL_CONSTANT");
 	public static boolean bounds = Config.getBool("BOUNDS");
 	public static float rCoefficient = Config.getF("BOUNCE_COEFFICIENT"); //0 to 1
 	
-	//orb appearance
-	public float r = 0f;
-	public float g = 0f;
-	public float b = 0.5f;
+	//orb color
+	public float r = 0f, g = 0f, b = 0.5f;
 	public Color color = Color.white;
 	public float highSpeed = 0f;
 	
@@ -25,8 +24,6 @@ public class Orb {
 	public static long lastTime = System.nanoTime(); //currentTimeMillis
 	public static long currentTime = System.nanoTime();
 	public static double passedTime;
-	
-	
 	public static void updateTime() {
 		currentTime = System.nanoTime(); //get the current time 
 		//in millisecond(1e3) change to nanosecond(1e9) for large amount of orbs
@@ -34,6 +31,61 @@ public class Orb {
 		//System.out.println(passedTime + " " +currentTime +" "+lastTime);
 		lastTime = currentTime; //set the past time for the next update
 		//System.out.println(passedTime);
+	}
+	
+	//Orb creation, refreshing and radius changing
+	public Orb()
+	{
+		pos = new Vector2(400, 100);
+		color = Color.white;
+		refresh();
+		
+	}
+	public Orb(Vector2 _pos, float _radius, Color _color)
+	{
+		pos = _pos;
+		if(_radius == 0)
+			radius = Config.getF("DEFAULT_ORB_RADIUS");
+		else
+			radius = _radius;
+		mass = (float) ((radius*radius)*Math.PI);
+		color = _color;
+		refresh();
+	}
+	public Orb(float x, float y, float _radius, Color _color)
+	{
+		pos = new Vector2(x, y);
+		if(_radius == 0)
+			radius = Config.getF("DEFAULT_ORB_RADIUS");
+		else
+			radius = _radius;
+		mass = (float) ((radius*radius)*Math.PI);
+		color = _color;
+		refresh();
+	}
+	public static void refresh()
+	{
+		gravity = Config.getF("FORCE_GRAVITY");
+		gravDirs = Config.getInt("GRAVITY_DIRECTION");
+		gravConst = Config.getF("GRAVITATIONAL_CONSTANT");
+		bounds = Config.getBool("BOUNDS");
+		rCoefficient = Config.getF("BOUNCE_COEFFICIENT");
+		if(Integer.toBinaryString(gravDirs).length() == 1)
+		{gravDirBool = "00"+Integer.toBinaryString(gravDirs);}
+		else if(Integer.toBinaryString(gravDirs).length() == 2)
+		{gravDirBool = "0"+Integer.toBinaryString(gravDirs);}
+		else
+		{gravDirBool = Integer.toBinaryString(gravDirs);}
+	}
+	public void sizeR(float _radius)
+	{
+		radius = _radius;
+		mass = (float) ((radius*radius)*Math.PI);
+	}
+	public void sizeM(float _mass)
+	{
+		mass = _mass;
+		radius = (float) Math.sqrt(mass / Math.PI);
 	}
 	
 	public void physicsUpdate(int id) {
@@ -56,13 +108,13 @@ public class Orb {
 	}
 	
 	public void applyGravity(int id) {
-		if(gravDir == 0) {downGravity();}//downward gravity
-		if(gravDir == 1) {centerGravity();} //central gravity
-		if(gravDir == 2) {orbGravity(id);} //orb related gravity
+		if(gravDirBool.charAt(2) == '1') {downGravity();}//downward gravity
+		if(gravDirBool.charAt(1) == '1') {centerGravity();} //central gravity
+		if(gravDirBool.charAt(0) == '1') {orbGravity(id);} //orb related gravity
 	}
 	public void downGravity() {
-		if(bounds == true && gravDir == 0 && pos.y <= GamePanel.screenHeight - radius) {
-			acceleration.y -= 98;
+		if(pos.y <= GamePanel.screenHeight - radius) {
+			acceleration.y -= gravity;
 		}
 	}
 	public void centerGravity() {
@@ -87,7 +139,7 @@ public class Orb {
 						Vector2 orbDist = new Vector2();
 						orbDist.x = pos.x-target.pos.x;
 						orbDist.y = pos.y-target.pos.y;
-						float grav = (gravConst * target.mass)/distance;
+						float grav = -(gravConst * target.mass)/distance;
 						
 						acceleration.x += (orbDist.x/distance)*grav;
 						acceleration.y += (orbDist.y/distance)*grav;
