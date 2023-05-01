@@ -27,7 +27,7 @@ public class GamePanel extends JPanel implements Runnable{
 	
 	static long lastOrb = System.nanoTime();
 	
-	KeyHandler keyH = new KeyHandler();
+	KeyMouseHandler keyH = new KeyMouseHandler();
 	Thread gameThread;
 	
 	static ArrayList<Orb> orbs = new ArrayList<Orb>();
@@ -37,6 +37,7 @@ public class GamePanel extends JPanel implements Runnable{
 		this.setBackground(Color.black);
 		//this.setDoubleBuffered(true);
 		this.addKeyListener(keyH);
+		this.addMouseListener(keyH);
 		this.setFocusable(true);
 	}
 	
@@ -86,6 +87,21 @@ public class GamePanel extends JPanel implements Runnable{
 			for(int i = 0; i<orbs.size(); i++) {
 				g2.setColor(orbs.get(i).color);
 				g2.fillOval((Math.round(orbs.get(i).pos.x) - Math.round(orbs.get(i).radius)), (Math.round(orbs.get(i).pos.y) - Math.round(orbs.get(i).radius)), Math.round(orbs.get(i).radius)*2, Math.round(orbs.get(i).radius)*2);
+				if(orbs.get(i).links.size() >= 1)
+				{
+					for(int j = 0; j<orbs.get(i).links.size(); j++)
+					{
+						g2.setColor(Color.white);
+						if(orbs.get(i) != orbs.get(i).links.get(j).orb2)
+							g2.drawLine(Math.round(orbs.get(i).pos.x), Math.round(orbs.get(i).pos.y),
+									Math.round(orbs.get(i).links.get(j).orb2.pos.x),
+									Math.round(orbs.get(i).links.get(j).orb2.pos.y));
+						else
+							g2.drawLine(Math.round(orbs.get(i).pos.x), Math.round(orbs.get(i).pos.y),
+									Math.round(orbs.get(i).links.get(j).orb1.pos.x),
+									Math.round(orbs.get(i).links.get(j).orb1.pos.y));
+					}
+				}
 			}
 		}
 		
@@ -99,6 +115,17 @@ public class GamePanel extends JPanel implements Runnable{
 		orbs.add(new Orb(new Vector2(
 				rand.nextFloat() * screenWidth, 
 				rand.nextFloat() * screenHeight), 
+				(float) (Config.getF("DEFAULT_ORB_RADIUS") + ((rand.nextFloat() - 0.5) * 2 * Config.getF("RADIUS_RANGE"))),
+				new Color((float) r/100, (float) g/100, (float) b/100)));
+		
+		//orbs.get(orbs.size()-1).speed.x = -100;
+		//orbs.get(orbs.size()-1).pos.x = screenWidth/2 - 50;
+		//orbs.get(orbs.size()-1).pos.x = (screenWidth/2 + offset);
+		//updateOffset();
+		updateColor();
+	}
+	public static void newOrb(float _x, float _y) {
+		orbs.add(new Orb(new Vector2(_x, _y), 
 				(float) (Config.getF("DEFAULT_ORB_RADIUS") + ((rand.nextFloat() - 0.5) * 2 * Config.getF("RADIUS_RANGE"))),
 				new Color((float) r/100, (float) g/100, (float) b/100)));
 		

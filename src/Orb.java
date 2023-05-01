@@ -1,4 +1,5 @@
 import java.awt.Color;
+import java.util.ArrayList;
 
 public class Orb {
 	//orb motion
@@ -7,6 +8,13 @@ public class Orb {
 	public Vector2 acceleration = new Vector2();
 	public float radius; //the radius of the orbs
 	public float mass;
+	public boolean massType;
+	public ArrayList<Link> links = new ArrayList<Link>();
+	public boolean updatePos = true;
+	//orb color
+	public float r = 0f, g = 0f, b = 0.3f;
+	public Color color = Color.white;
+	public float highSpeed = 0f;
 	
 	public static float gravity = Config.getF("FORCE_GRAVITY");
 	public static int gravDirs = Config.getInt("GRAVITY_DIRECTION");
@@ -14,11 +22,6 @@ public class Orb {
 	public static float gravConst = Config.getF("GRAVITATIONAL_CONSTANT");
 	public static boolean bounds = Config.getBool("BOUNDS");
 	public static float rCoefficient = Config.getF("BOUNCE_COEFFICIENT"); //0 to 1
-	
-	//orb color
-	public float r = 0f, g = 0f, b = 0.5f;
-	public Color color = Color.white;
-	public float highSpeed = 0f;
 	
 	//time stuff
 	public static long lastTime = System.nanoTime(); //currentTimeMillis
@@ -38,28 +41,21 @@ public class Orb {
 	{
 		pos = new Vector2(400, 100);
 		color = Color.white;
+		rAndM(Config.getF("DEFAULT_ORB_RADIUS"));
 		refresh();
 		
 	}
 	public Orb(Vector2 _pos, float _radius, Color _color)
 	{
 		pos = _pos;
-		if(_radius == 0)
-			radius = Config.getF("DEFAULT_ORB_RADIUS");
-		else
-			radius = _radius;
-		mass = (float) ((radius*radius)*Math.PI);
+		rAndM(_radius);
 		color = _color;
 		refresh();
 	}
 	public Orb(float x, float y, float _radius, Color _color)
 	{
 		pos = new Vector2(x, y);
-		if(_radius == 0)
-			radius = Config.getF("DEFAULT_ORB_RADIUS");
-		else
-			radius = _radius;
-		mass = (float) ((radius*radius)*Math.PI);
+		rAndM(_radius);
 		color = _color;
 		refresh();
 	}
@@ -77,26 +73,40 @@ public class Orb {
 		else
 		{gravDirBool = Integer.toBinaryString(gravDirs);}
 	}
-	public void sizeR(float _radius)
+	public void rAndM(float _radius)
 	{
-		radius = _radius;
-		mass = (float) ((radius*radius)*Math.PI);
+		if(_radius == 0)
+			GamePanel.orbs.remove(this);
+		else
+			radius = Math.abs(_radius);
+		if(_radius > 0)
+		{
+			mass = (float) ((radius*radius)*Math.PI);
+			massType = true;
+		}
+		else
+		{
+			mass = (float) (-(radius*radius)*Math.PI);
+			massType = false;
+		}
 	}
-	public void sizeM(float _mass)
+	public void mAndR(float _mass)
 	{
-		mass = _mass;
-		radius = (float) Math.sqrt(mass / Math.PI);
+		if(_mass == 0)
+			GamePanel.orbs.remove(this);
+		else
+			mass = _mass;
+		radius = (float) Math.sqrt(Math.abs(_mass) / Math.PI);
 	}
 	
 	public void physicsUpdate(int id) {
 		acceleration.x = 0;
 		acceleration.y = 0;
-		mass = (float) ((radius*radius)*Math.PI);
-		applyGravity(id);
-		updatePosition();
+		if(updatePos) {applyGravity(id);}
+		if(updatePos) {updatePosition();}
 		applyCollision(id);
 		if(bounds == true) {applyConstraints();}
-		if(true) {speedColors();}
+		if(updatePos) {speedColors();}
 	}
 	
 	public void speedColors() {
@@ -104,7 +114,11 @@ public class Orb {
 		if(Math.abs(speed.y) > highSpeed) {highSpeed = Math.abs(speed.y);}
 		r = Math.abs(speed.x) / highSpeed;
 		g = Math.abs(speed.y) / highSpeed;
-		color = new Color(r, g, b);
+		if(massType)
+			color = new Color(r, g, b);
+		else
+			color = new Color(1 - ((g / 2) + ((1 - b) / 2)), 1 - ((r / 2) + ((1 - b) / 2)), 1 - ((r / 2) + (g / 2)));
+		highSpeed -= 0.1 * passedTime;
 	}
 	
 	public void applyGravity(int id) {
@@ -139,7 +153,7 @@ public class Orb {
 						Vector2 orbDist = new Vector2();
 						orbDist.x = pos.x-target.pos.x;
 						orbDist.y = pos.y-target.pos.y;
-						float grav = -(gravConst * target.mass)/distance;
+						float grav = (gravConst * target.mass)/distance;
 						
 						acceleration.x += (orbDist.x/distance)*grav;
 						acceleration.y += (orbDist.y/distance)*grav;
@@ -191,6 +205,8 @@ public class Orb {
 	}
 	
 	public void applyCollision(int id) {
+		if(links.size() > 0)
+			doLinks();
 		if(GamePanel.orbs.size() >= 2) {
 			for(int i = id+1; i < GamePanel.orbs.size(); i++) {
 				Orb target = GamePanel.orbs.get(i);
@@ -205,10 +221,16 @@ public class Orb {
 					
 					Vector2 overlap = new Vector2((pos.x-target.pos.x)*overlapRatio, (pos.y-target.pos.y)*overlapRatio);
 					
-					pos.x += (radius/totRadius)*overlap.x;
-					target.pos.x -= (target.radius/totRadius)*overlap.x;
-					pos.y += (radius/totRadius)*overlap.y;
-					target.pos.y -= (target.radius/totRadius)*overlap.y;
+					if(updatePos)
+					{
+						pos.x += (target.mass/(mass + target.mass))*overlap.x;
+						pos.y += (target.mass/(mass + target.mass))*overlap.y;
+					}
+					if(target.updatePos)
+					{
+						target.pos.x -= (mass/(mass + target.mass))*overlap.x;
+						target.pos.y -= (mass/(mass + target.mass))*overlap.y;
+					}
 					
 					//modify the speed
 					/*Vector2 newSpeed = new Vector2((speed.x+target.speed.x)/2, (speed.y+target.speed.y)/2);
@@ -248,6 +270,60 @@ public class Orb {
 					//apply new speed
 					speed = speed.add(speed.multiply(o1C1, rCoefficient), speed.multiply(oC0, (1 - rCoefficient)));
 					target.speed = target.speed.add(target.speed.multiply(o2C1, rCoefficient), target.speed.multiply(oC0, (1 - rCoefficient)));
+					
+					if(massType != target.massType)
+					{
+						if(Math.abs(mass) > Math.abs(target.mass))
+						{
+							mAndR(mass + target.mass);
+							target.mAndR(0);
+						} else if(Math.abs(mass) == Math.abs(target.mass))
+						{
+							mAndR(0);
+							target.mAndR(0);
+						} else
+						{
+							mAndR(0);
+							target.mAndR(target.mass + mass);
+						}
+					}
+				}
+			}
+		}
+	}
+	public void doLinks()
+	{
+		for(int i = 0; i < links.size(); i++)
+		{
+			Link link = links.get(i);
+			if(!GamePanel.orbs.contains(link.orb1) || !GamePanel.orbs.contains(link.orb2))
+			{
+				link.orb1.links.remove(link);
+				link.orb2.links.remove(link);
+				break;
+			}
+			
+			Orb o;
+			if(this == link.orb1) {o = link.orb2;}
+			else {o = link.orb1;}
+			
+			float dist = Vector2.sDistance(pos, o.pos);
+			if(dist > link.length)
+			{
+				float overstrech = dist - link.length;
+				float overstrechRatio = overstrech/link.length;
+				
+				Vector2 moving = new Vector2((pos.x-o.pos.x)*overstrechRatio, (pos.y-o.pos.y)*overstrechRatio);
+				
+				if(updatePos)
+				{
+					pos.x -= (mass /(mass + o.mass)) * moving.x;
+					pos.y -= (mass /(mass + o.mass)) * moving.y;
+				}
+				if(o.updatePos)
+				{
+					o.pos.x += (o.mass /(mass + o.mass)) * moving.x;
+					o.pos.y += (o.mass /(mass + o.mass)) * moving.y;
 				}
 			}
 		}

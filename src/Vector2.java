@@ -49,4 +49,8 @@ public class Vector2 {
 		float dist = (float) Math.sqrt(((a.x - b.x)*(a.x - b.x)) + ((a.y - b.y)*(a.y - b.y)));
 		return dist;
 	}
+	public static float sDistance(Vector2 a, Vector2 b) {
+		float dist = (float) Math.sqrt(((a.x - b.x)*(a.x - b.x)) + ((a.y - b.y)*(a.y - b.y)));
+		return dist;
+	}
 }
