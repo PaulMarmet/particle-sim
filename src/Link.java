@@ -12,7 +12,7 @@ public class Link {
 		if(type == 0)
 			length = orb1.radius + orb2.radius;
 		else if(type == 1)
-			length = Vector2.sDistance(orb1.pos, orb2.pos);
+			length = Vector2.distance(orb1.pos, orb2.pos);
 		orb1.links.add(this);
 		orb2.links.add(this);
 	}

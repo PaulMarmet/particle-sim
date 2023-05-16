@@ -147,8 +147,7 @@ public class Orb {
 			for(int i = 0; i < GamePanel.orbs.size(); i++) {
 				if(i != id) {
 					Orb target = GamePanel.orbs.get(i);
-					Vector2 vecteur = new Vector2(); 
-					float distance = vecteur.distance(pos, target.pos);
+					float distance = Vector2.distance(pos, target.pos);
 					if(Math.abs(distance) > target.radius + radius) {
 						Vector2 orbDist = new Vector2();
 						orbDist.x = pos.x-target.pos.x;
@@ -210,8 +209,7 @@ public class Orb {
 		if(GamePanel.orbs.size() >= 2) {
 			for(int i = id+1; i < GamePanel.orbs.size(); i++) {
 				Orb target = GamePanel.orbs.get(i);
-				Vector2 vecteur = new Vector2(); 
-				float distance = vecteur.distance(pos, target.pos);
+				float distance = Vector2.distance(pos, target.pos);
 				//System.out.println(pos.x+" : "+target.pos.x+" : "+distance);
 				if(Math.abs(distance) < target.radius + radius) {
 					//position based collision
@@ -240,8 +238,8 @@ public class Orb {
 					speed.y = newSpeed.y;
 					target.speed.y = newSpeed.y;*/
 					Vector2 normal = new Vector2(target.pos.x-pos.x, target.pos.y-pos.y);
-					float magnitude = normal.magnitude(normal);
-					Vector2 unitNormal = normal.unitVector(normal, magnitude);
+					float magnitude = normal.magnitude();
+					Vector2 unitNormal = normal.unitVector(magnitude);
 					Vector2 unitTangent = new Vector2(-unitNormal.y, unitNormal.x);
 					
 					//Velocity Normal & Velocity Tangent
@@ -255,10 +253,10 @@ public class Orb {
 					float pV2N = (v2N * (target.mass - mass) + 2 * mass * v1N) / (target.mass + mass);
 					
 					//new speed vectors
-					Vector2 v_pV1N = unitNormal.multiply(unitNormal, pV1N);
-					Vector2 v_pV1T = unitTangent.multiply(unitTangent, v1T);
-					Vector2 v_pV2N = unitNormal.multiply(unitNormal, pV2N);
-					Vector2 v_pV2T = unitTangent.multiply(unitTangent, v2T);
+					Vector2 v_pV1N = unitNormal.multiply(pV1N);
+					Vector2 v_pV1T = unitTangent.multiply(v1T);
+					Vector2 v_pV2N = unitNormal.multiply(pV2N);
+					Vector2 v_pV2T = unitTangent.multiply(v2T);
 
 					// orb coefficient
 					Vector2 o1C1 = new Vector2(v_pV1N.x + v_pV1T.x, v_pV1N.y + v_pV1T.y);
@@ -268,8 +266,8 @@ public class Orb {
 					
 					
 					//apply new speed
-					speed = speed.add(speed.multiply(o1C1, rCoefficient), speed.multiply(oC0, (1 - rCoefficient)));
-					target.speed = target.speed.add(target.speed.multiply(o2C1, rCoefficient), target.speed.multiply(oC0, (1 - rCoefficient)));
+					speed = Vector2.add(o1C1.multiply(rCoefficient), oC0.multiply(1 - rCoefficient));
+					target.speed = Vector2.add(o2C1.multiply(rCoefficient), oC0.multiply(1 - rCoefficient));
 					
 					if(massType != target.massType)
 					{
@@ -295,7 +293,9 @@ public class Orb {
 	{
 		for(int i = 0; i < links.size(); i++)
 		{
+			//get the  link
 			Link link = links.get(i);
+			//if the link is broken
 			if(!GamePanel.orbs.contains(link.orb1) || !GamePanel.orbs.contains(link.orb2))
 			{
 				link.orb1.links.remove(link);
@@ -307,9 +307,11 @@ public class Orb {
 			if(this == link.orb1) {o = link.orb2;}
 			else {o = link.orb1;}
 			
-			float dist = Vector2.sDistance(pos, o.pos);
+			//do the stuff
+			float dist = Vector2.distance(pos, o.pos);
 			if(dist > link.length)
 			{
+				//fix position
 				float overstrech = dist - link.length;
 				float overstrechRatio = overstrech/link.length;
 				
@@ -325,6 +327,39 @@ public class Orb {
 					o.pos.x += (o.mass /(mass + o.mass)) * moving.x;
 					o.pos.y += (o.mass /(mass + o.mass)) * moving.y;
 				}
+				
+				//fix speed
+				Vector2 normal = new Vector2(pos.x-o.pos.x, pos.y-o.pos.y);
+				float magnitude = normal.magnitude();
+				Vector2 unitNormal = normal.unitVector(magnitude);
+				Vector2 unitTangent = new Vector2(-unitNormal.y, unitNormal.x);
+				
+				//Velocity Normal & Velocity Tangent
+				float v1N = unitNormal.dotProduct(unitNormal, speed);
+				float v1T = unitNormal.dotProduct(unitTangent, speed);
+				float v2N = unitNormal.dotProduct(unitNormal, o.speed);
+				float v2T = unitNormal.dotProduct(unitTangent, o.speed);
+				
+				//Prime velocity normal
+				float pV1N = (v1N * (mass - o.mass) + 2 * o.mass * v2N) / (mass + o.mass);
+				float pV2N = (v2N * (o.mass - mass) + 2 * mass * v1N) / (o.mass + mass);
+				
+				//new speed vectors
+				Vector2 v_pV1N = unitNormal.multiply(pV1N);
+				Vector2 v_pV1T = unitTangent.multiply(v1T);
+				Vector2 v_pV2N = unitNormal.multiply(pV2N);
+				Vector2 v_pV2T = unitTangent.multiply(v2T);
+
+				// orb coefficient
+				Vector2 o1C1 = new Vector2(v_pV1N.x + v_pV1T.x, v_pV1N.y + v_pV1T.y);
+				Vector2 o2C1 = new Vector2(v_pV2N.x + v_pV2T.x, v_pV2N.y + v_pV2T.y);
+				Vector2 oC0 = new Vector2(((mass * speed.x) + (o.mass * o.speed.x)) / (mass + o.mass), ((mass * speed.y) + (o.mass * o.speed.y)) / (mass + o.mass));
+
+				
+				
+				//apply new speed
+				speed = Vector2.add(o1C1.multiply(rCoefficient), oC0.multiply(1 - rCoefficient));
+				o.speed = Vector2.add(o2C1.multiply(rCoefficient), oC0.multiply(1 - rCoefficient));
 			}
 		}
 	}

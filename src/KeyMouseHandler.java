@@ -62,7 +62,7 @@ public class KeyMouseHandler implements KeyListener,  MouseListener{
 			Vector2 mouse = new Vector2(e.getPoint().x, e.getPoint().y);
 			for(int i = 0; i < GamePanel.orbs.size(); i++)
 			{
-				if(Vector2.sDistance(mouse, GamePanel.orbs.get(i).pos) <= GamePanel.orbs.get(i).radius)
+				if(Vector2.distance(mouse, GamePanel.orbs.get(i).pos) <= GamePanel.orbs.get(i).radius)
 				{
 					if(orbed == null)
 					{
@@ -70,7 +70,7 @@ public class KeyMouseHandler implements KeyListener,  MouseListener{
 					}
 					else if(orbed != GamePanel.orbs.get(i))
 					{
-						Link link = new Link(orbed, GamePanel.orbs.get(i), 1);
+						new Link(orbed, GamePanel.orbs.get(i), 1);
 						orbed = null;
 					}
 					break;
@@ -82,10 +82,10 @@ public class KeyMouseHandler implements KeyListener,  MouseListener{
 			Vector2 mouse = new Vector2(e.getPoint().x, e.getPoint().y);
 			for(int i = 0; i < GamePanel.orbs.size(); i++)
 			{
-				if(Vector2.sDistance(mouse, GamePanel.orbs.get(i).pos) <= GamePanel.orbs.get(i).radius)
+				if(Vector2.distance(mouse, GamePanel.orbs.get(i).pos) <= GamePanel.orbs.get(i).radius)
 				{
 					GamePanel.orbs.get(i).updatePos = false;
-					System.out.println("You just got orbed B)");
+					//System.out.println("You just got orbed B)");
 					GamePanel.orbs.get(i).color = Color.white;
 					break;
 				}
