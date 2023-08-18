@@ -58,6 +58,7 @@ public class SimSettings {
 				{
 					Config.set(configs[i].config, configs[i].checkBox.isSelected());
 				}
+				Config.apply();
 			}
 		}
 		Orb.refresh();

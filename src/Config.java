@@ -2,12 +2,11 @@ import java.io.*;
 import java.util.Properties;
 
 public class Config {
-	static String configFilePath;
+	static String configFilePath = "src/config.properties";
 	static FileInputStream propsInput;
 	static Properties prop;
     public static void main(String[] args) {
         try {
-            configFilePath = "src/config.properties";
             propsInput = new FileInputStream(configFilePath);
             prop = new Properties();
             prop.load(propsInput);
@@ -34,7 +33,7 @@ public class Config {
     	return data;
     }
     
-    //set value to config file
+    //set value to prop
     public static void set(String peram, float value) {
 		prop.setProperty(peram, String.valueOf(value));
     }
@@ -43,5 +42,17 @@ public class Config {
     }
     public static void set(String peram, boolean value) {
 		prop.setProperty(peram, String.valueOf(value));
+    }
+    
+    //apply values to config file
+    public static void apply()
+    {
+    	try{
+    	prop.store(new FileOutputStream(configFilePath), null);
+    	} catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
